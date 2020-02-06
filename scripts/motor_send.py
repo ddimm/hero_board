@@ -5,7 +5,8 @@ import queue
 import serial
 from hero_board.msg import MotorVal
 from utils.protocol import var_len_proto_recv
-
+import struct
+import random
 
 motor_signals = queue.Queue()
 should_terminate = threading.Event()
@@ -22,6 +23,12 @@ def hero_recv():
         motor_vals = ser.read(ser.inWaiting())
         motor_signals.put(var_len_proto_recv(motor_vals))
     ser.close()
+
+def dummy_recv():
+    while not rospy.is_shutdown():
+        motor_vals = struct.pack('1i', [random.randint(0,32)])
+        motor_vals = var_len_proto_send(motor_vals)
+        motor_signals.put(motor_vals)
     
 
 def motor_pub():
@@ -33,13 +40,15 @@ def motor_pub():
             continue
         data = motor_signals.get()
         rospy.loginfo(data)
-        pub.publish(data)
+        pub.publish(MotorVal(data))
         rate.sleep()
 
 
 if __name__=="__main__":
-    recv_thread = threading.Thread(target=hero_recv)
-    recv_thread.start()
+    # recv_thread = threading.Thread(target=hero_recv)
+    # recv_thread.start()
+    dummy_thread = threading.Thread(target=dummy_recv)
+    dummy_thread.start()
     try:
         motor_pub()
     except rospy.ROSInterruptException as e:
