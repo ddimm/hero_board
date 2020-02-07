@@ -7,7 +7,7 @@ from hero_board.msg import MotorVal
 from utils.protocol import var_len_proto_recv
 import struct
 import random
-
+import traceback
 motor_signals = queue.Queue(10)
 should_terminate = threading.Event()
 def hero_recv():
@@ -17,22 +17,28 @@ def hero_recv():
         ser  = serial.Serial('/dev/ttyUSB0', 115200, timeout=1) 
     except Exception as e:
         print(e)
+        traceback.print_exc()
         rospy.signal_shutdown("couldn't connect to serial")
-        return
+        exit(-1)
+        
     while not rospy.is_shutdown():
         motor_vals = ser.read(ser.inWaiting())
-        motor_signals.put(var_len_proto_recv(motor_vals))
+        to_send = var_len_proto_recv(motor_vals)
+        for x in to_send:
+            motor_signals.put(list(x))
+
     ser.close()
 
 def dummy_recv():
     while not rospy.is_shutdown():
         motor_vals = struct.pack('1i', [random.randint(0,32)])
+        
         motor_vals = var_len_proto_send(motor_vals)
         motor_signals.put(motor_vals)
     
 
 def motor_pub():
-    pub = rospy.Publisher('motor_volts', MotorVal, queue_size=10)
+    pub = rospy.Publisher('motor/current', MotorVal, queue_size=10)
     rospy.init_node('motor_volts', anonymous=True)
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
@@ -46,14 +52,17 @@ def motor_pub():
 
 if __name__=="__main__":
     recv_thread = threading.Thread(target=hero_recv)
+    recv_thread.daemon = True
     recv_thread.start()
-    # dummy_thread = threading.Thread(target=dummy_recv)
-    # dummy_thread.start()
     try:
         motor_pub()
     except rospy.ROSInterruptException as e:
         print(e)
+        traceback.print_exc()
+        recv_thread.join()
         exit(1)
     except Exception as e:
         print(e)
+        traceback.print_exc()
+        recv_thread.join()
         exit(1)
