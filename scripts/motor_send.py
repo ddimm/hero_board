@@ -8,7 +8,7 @@ from utils.protocol import var_len_proto_recv
 import struct
 import random
 
-motor_signals = queue.Queue()
+motor_signals = queue.Queue(10)
 should_terminate = threading.Event()
 def hero_recv():
     ser =None

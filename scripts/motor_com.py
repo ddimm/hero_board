@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 import threading
 import queue
@@ -7,10 +7,10 @@ from hero_board.msg import MotorVal
 from utils.protocol import var_len_proto_send, var_len_proto_recv
 
 
-
+#name of the receiver node
 MOTOR_REC_NAME = "moto_commands"
 MOTOR_COMMAND_PUB = "motor_pub"
-QUEUE_SIZE = 100
+QUEUE_SIZE = 10
 
 try:
 
