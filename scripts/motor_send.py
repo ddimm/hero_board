@@ -45,10 +45,10 @@ def motor_pub():
 
 
 if __name__=="__main__":
-    # recv_thread = threading.Thread(target=hero_recv)
-    # recv_thread.start()
-    dummy_thread = threading.Thread(target=dummy_recv)
-    dummy_thread.start()
+    recv_thread = threading.Thread(target=hero_recv)
+    recv_thread.start()
+    # dummy_thread = threading.Thread(target=dummy_recv)
+    # dummy_thread.start()
     try:
         motor_pub()
     except rospy.ROSInterruptException as e:
