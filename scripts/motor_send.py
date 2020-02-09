@@ -8,12 +8,12 @@ from utils.protocol import var_len_proto_recv
 import struct
 import random
 import traceback
-motor_signals = queue.Queue(10)
+motor_signals = queue.Queue()
 should_terminate = threading.Event()
+
 def hero_recv():
     ser =None
     try:
-
         ser  = serial.Serial('/dev/ttyUSB0', 115200, timeout=1) 
     except Exception as e:
         print(e)
@@ -38,16 +38,14 @@ def dummy_recv():
     
 
 def motor_pub():
-    pub = rospy.Publisher('motor/current', MotorVal, queue_size=10)
+    pub = rospy.Publisher('motor/current', MotorVal, queue_size=1)
     rospy.init_node('motor_volts', anonymous=True)
-    rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         if motor_signals.empty():
             continue
         data = motor_signals.get()
         rospy.loginfo(data)
         pub.publish(MotorVal(data))
-        rate.sleep()
 
 
 if __name__=="__main__":
