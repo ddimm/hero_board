@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
+
+import rospy
 import queue
 import threading
-import rospy
+
 import serial
 import traceback
 from hero_board.msg import MotorVal
@@ -12,12 +14,11 @@ MOTOR_REC_NAME = "motor_commands"
 MOTOR_COMMAND_PUB = "/motor/output"
 MOTOR_PUB_NAME = "motor_volts"
 MOTOR_VOLT_NAME = "motor/current"
-ROSPY_RATE=30
 
-motor_signals = queue.Queue()
+motor_signals = queue.Queue(5)
 
 try:
-    ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
+    ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=None)
 except Exception as e:
     traceback.print_exc()
     exit(-1)
@@ -40,7 +41,7 @@ def process_motor_values(motor_vals):
     '''takes in the MotorVal message as a parameter and sends the bytes
     to serial'''
     m_val = motor_vals.motorval
-    rospy.loginfo(m_val)
+    rospy.loginfo("motor value: %s",m_val)
     ser.write(var_len_proto_send(m_val))
 
 
@@ -51,7 +52,7 @@ def motor_listener():
     '''
     rospy.init_node(MOTOR_REC_NAME, anonymous=True)
     rospy.Subscriber(MOTOR_COMMAND_PUB, MotorVal, process_motor_values)
-    rospy.spin()
+
 if __name__=="__main__":
     try:
         motor_listener()
@@ -60,15 +61,14 @@ if __name__=="__main__":
         recv_thread.start()
 
         pub = rospy.Publisher(MOTOR_VOLT_NAME, MotorVal)
-        rospy.init_node(MOTOR_PUB_NAME)
-        rate = rospy.Rate(ROSPY_RATE)
+        print("starting publisher")
         while not rospy.is_shutdown():
             if motor_signals.empty():
                 continue
             data = motor_signals.get()
-            rospy.loginfo(data)
+            rospy.loginfo("current value: %s",data)
             pub.publish(MotorVal(data))
-            rate.sleep()
+
     except KeyboardInterrupt as k:
         traceback.print_exc()
     except Exception as e:
