@@ -13,7 +13,6 @@ should_terminate = threading.Event()
 def hero_recv():
     ser =None
     try:
-
         ser  = serial.Serial('/dev/ttyUSB0', 115200, timeout=1) 
     except Exception as e:
         print(e)
