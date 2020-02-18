@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 import rospy
-import queue
-import threading
 import serial
 import traceback
 from hero_board.msg import MotorVal
@@ -11,25 +9,11 @@ MOTOR_REC_NAME = "motor_commands"
 MOTOR_COMMAND_PUB = "/motor/output"
 MOTOR_VOLT_NAME = "/motor/current"
 
-motor_signals = queue.Queue(5)
-
 try:
     ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=None)
 except Exception as e:
     traceback.print_exc()
     exit(-1)
-
-
-def hero_recv():
-    '''
-        runs in a thread to read data from the serial port
-    '''
-    while not rospy.is_shutdown():
-        motor_vals = ser.read(ser.inWaiting())
-        to_send = var_len_proto_recv(motor_vals)
-        for x in to_send:
-            motor_signals.put(list(x))
-
 
 def process_motor_values(motor_vals):
     '''
@@ -50,17 +34,17 @@ if __name__ == "__main__":
         rospy.init_node(MOTOR_REC_NAME, anonymous=True)
         rospy.Subscriber(MOTOR_COMMAND_PUB, MotorVal, process_motor_values)
 
-        recv_thread = threading.Thread(target=hero_recv)
-        recv_thread.daemon = True
-        recv_thread.start()
-        pub = rospy.Publisher(MOTOR_VOLT_NAME, MotorVal, queue_size=1)
-
         print("starting publisher")
+        # no need to used a thread here
+        # as per testing, main thread works fine
+        # ros publisher queue can be used to limit the number of messages
+        pub = rospy.Publisher(MOTOR_VOLT_NAME, MotorVal, queue_size=5)
         while not rospy.is_shutdown():
-            if not motor_signals.empty():
-                data = motor_signals.get()
-                pub.publish(MotorVal(data))
-
+            motor_vals = ser.read(ser.inWaiting())
+            to_send = var_len_proto_recv(motor_vals)
+            for x in to_send:
+                pub.publish(MotorVal(list(x)))
+        
     except KeyboardInterrupt as k:
         traceback.print_exc()
     except Exception as e:

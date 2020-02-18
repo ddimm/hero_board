@@ -1,2 +1,2 @@
 
-uint8[8] motorval
+uint8[] motorval
