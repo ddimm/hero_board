@@ -1,3 +1,5 @@
 
 ---
-string currentState
+bool MANUAL=0
+bool AUTONOMY=1
+bool state
