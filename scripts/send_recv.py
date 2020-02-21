@@ -58,8 +58,7 @@ if __name__ == "__main__":
         rospy.Subscriber(MOTOR_COMMAND_PUB, MotorVal, process_motor_values)
         rospy.Subscriber(AI_MOTOR_CONTROL, MotorVal, process_auto_motor_values)
         print("starting publisher")
-        # no need to used a thread here
-        # as per testing, main thread works fine
+        # no need to used a thread here. As per testing, main thread works fine
         # ros publisher queue can be used to limit the number of messages
         pub = rospy.Publisher(MOTOR_VOLT_NAME, MotorVal, queue_size=5)
         while not rospy.is_shutdown():
@@ -69,8 +68,6 @@ if __name__ == "__main__":
                 pub.publish(MotorVal(list(x)))
         
     except KeyboardInterrupt as k:
-        traceback.print_exc()
-    except Exception as e:
         traceback.print_exc()
     finally:
         ser.close()
