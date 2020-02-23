@@ -6,10 +6,11 @@ from hero_board.msg import MotorVal
 from hero_board.srv import GetState, GetStateResponse, SetState, SetStateRequest, SetStateResponse
 from utils.protocol import var_len_proto_recv, var_len_proto_send
 import time
+from math import pi
 
 MOTOR_REC_NAME = "motor_commands"
 MOTOR_COMMAND_PUB = "/motor/output"
-MOTOR_VOLT_NAME = "/motor/current"
+MOTOR_VOLT_NAME = "/motor/status"
 AI_MOTOR_CONTROL = "/motor/cmd_vel"
 
 manual_sub = None
@@ -92,8 +93,11 @@ if __name__ == "__main__":
                 time.sleep(0.01)
                 continue
             to_send = var_len_proto_recv(motor_vals)
+            val = MotorVal()
             for x in to_send:
-                pub.publish(MotorVal(x))
+                val.motorval = x[:-1]
+                val.angle = (x[-1] - 40) / (215 - 40) * pi
+                pub.publish(val)
         
     except KeyboardInterrupt as k:
         traceback.print_exc()
