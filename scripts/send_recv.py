@@ -5,6 +5,7 @@ import traceback
 from hero_board.msg import MotorVal
 from hero_board.srv import GetState, GetStateResponse, SetState, SetStateRequest, SetStateResponse
 from utils.protocol import var_len_proto_recv, var_len_proto_send
+import time
 
 MOTOR_REC_NAME = "motor_commands"
 MOTOR_COMMAND_PUB = "/motor/output"
@@ -79,7 +80,7 @@ if __name__ == "__main__":
         '''
         control_server()
         rospy.init_node(MOTOR_REC_NAME, anonymous=True)
-        manual_sub = rospy.Subscriber(MOTOR_COMMAND_PUB, MotorVal, process_motor_values)
+        manual_sub = rospy.Subscriber(MOTOR_COMMAND_PUB, MotorVal, process_motor_values, queue_size=1)
         
         rospy.loginfo("starting publisher")
         # no need to used a thread here. As per testing, main thread works fine
@@ -87,9 +88,12 @@ if __name__ == "__main__":
         pub = rospy.Publisher(MOTOR_VOLT_NAME, MotorVal, queue_size=5)
         while not rospy.is_shutdown():
             motor_vals = ser.read(ser.inWaiting())
+            if pub.get_num_connections() == 0:
+                time.sleep(0.01)
+                continue
             to_send = var_len_proto_recv(motor_vals)
             for x in to_send:
-                pub.publish(MotorVal(list(x)))
+                pub.publish(MotorVal(x))
         
     except KeyboardInterrupt as k:
         traceback.print_exc()
