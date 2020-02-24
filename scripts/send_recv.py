@@ -89,14 +89,15 @@ if __name__ == "__main__":
         pub = rospy.Publisher(MOTOR_VOLT_NAME, MotorVal, queue_size=5)
         while not rospy.is_shutdown():
             motor_vals = ser.read(ser.inWaiting())
-            if pub.get_num_connections() == 0:
+            if pub.get_num_connections() == 0: # don't publish if there're subscribers
                 time.sleep(0.01)
                 continue
             to_send = var_len_proto_recv(motor_vals)
             val = MotorVal()
             for x in to_send:
-                val.motorval = x[:-1]
-                val.angle = (x[-1] - 40) / (215 - 40) * pi
+                val.motorval = x[:-2]
+                val.angle = (x[-2] - 40) / (215 - 40) * pi
+                val.translation = x[-1] / 255.0
                 pub.publish(val)
         
     except KeyboardInterrupt as k:
