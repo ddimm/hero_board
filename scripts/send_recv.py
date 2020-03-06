@@ -56,6 +56,7 @@ def change_control(req):
         print('changing to manual control')
         if auto_sub:
             auto_sub.unregister()
+            auto_sub = None
         manual_sub = rospy.Subscriber(MOTOR_COMMAND_PUB, MotorVal, process_motor_values)
         return SetStateResponse('changing to manual control')
 
@@ -63,6 +64,7 @@ def change_control(req):
         print('changing to autonomy')
         if manual_sub:
             manual_sub.unregister()
+            manual_sub = None
         
         auto_sub = rospy.Subscriber(AI_MOTOR_CONTROL, MotorVal, process_auto_motor_values)
         return SetStateResponse('changing to autonomy control')
