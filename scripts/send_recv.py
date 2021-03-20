@@ -6,6 +6,7 @@ from hero_board.msg import MotorVal
 from hero_board.srv import GetState, GetStateResponse, SetState, SetStateRequest, SetStateResponse
 from utils.protocol import var_len_proto_recv, var_len_proto_send
 import time
+import struct
 from math import pi
 
 MOTOR_REC_NAME = "motor_commands"
@@ -97,9 +98,8 @@ if __name__ == "__main__":
             to_send = var_len_proto_recv(motor_vals)
             val = MotorVal()
             for x in to_send:
-                val.motorval = x[:-2]
-                val.angle = (x[-2] - 40) / (215 - 40) * pi
-                val.translation = x[-1] / 255.0
+                val.motorval = x[:-8]
+                val.angle, val.translation = struct.unpack("2f", x[-8:])
                 pub.publish(val)
         
     except KeyboardInterrupt as k:
